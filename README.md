@@ -18,5 +18,23 @@ classes can be found within the SDK distribution.
 
 ### How to use the examples
 
-This repository comes with an eclipse project of a Google Glass app an example
-that shows how to use the SDK.
+This repository comes with an eclipse project of a Google Glass app with an
+example that shows how to use the SDK.
+
+To run the example follow these steps:
+ 1.  Import the project into your eclipse workspace.
+ 2.  Integrate the CatchoomSDK into the project (see [below](#step-by-step-guide)).
+ 3.  Run the app on an Android device.
+
+### Add CatchoomSDK for Google Glass to the Example project
+
+#### Requirements
+
+To build the project or use the library, you will need the latest version of the
+[Android SDK](http://developer.android.com/sdk/index.html?hl=sk), Google's [Glass Development kit](https://developers.google.com/glass/develop/gdk/) and,
+of course, your Google Glass.
+
+#### Step-by-step guide
+1.  Download the [Catchoom SDK](http://catchoom.com/product/mobile-sdk/) for Google Glass.
+2.  Unzip the package
+3.  Copy the libs folder into the root of the project.
