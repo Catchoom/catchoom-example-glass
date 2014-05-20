@@ -1,13 +1,15 @@
-package com.example.catchoom_example_glass;
+package com.catchoom.examples.glass;
 
 import java.util.ArrayList;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.FrameLayout;
+import android.widget.TextView;
 
 import com.catchoom.api.Catchoom;
 import com.catchoom.api.CatchoomErrorResponseItem;
@@ -16,10 +18,9 @@ import com.catchoom.api.CatchoomSearchResponseItem;
 import com.catchoom.camera.CatchoomImage;
 import com.catchoom.camera.CatchoomImageHandler;
 import com.catchoom.camera.CatchoomSingleShotActivity;
-import com.catchoom.glass.R;
 import com.google.android.glass.app.Card;
 
-public class MainActivity extends CatchoomSingleShotActivity implements
+public class SingleShotActivity extends CatchoomSingleShotActivity implements
 CatchoomResponseHandler, CatchoomImageHandler {
 	private final String TAG= "CatchoomGlassExample";
 	
@@ -27,16 +28,17 @@ CatchoomResponseHandler, CatchoomImageHandler {
 	
 	private FrameLayout mPreview;
 	private Context mContext;
+	private TextView mTextView;
 	private Catchoom mCatchoom;
 	private CatchoomImageHandler mCatchoomImageHandler;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_main);
+		setContentView(R.layout.activity_single_shot);
 		
-		mPreview = (FrameLayout) findViewById(R.id.camera_preview);
-		
+		mPreview = (FrameLayout) findViewById(R.id.single_shot_preview);
+		mTextView = (TextView) findViewById(R.id.singleshot_textview);
 		mContext = getApplicationContext();
 		//The CatchoomImageHandler is the object that receives the callbacks from the camera.
 		mCatchoomImageHandler = (CatchoomImageHandler) this;
@@ -60,6 +62,7 @@ CatchoomResponseHandler, CatchoomImageHandler {
 		
 		if (keyCode == KeyEvent.KEYCODE_DPAD_CENTER) {
 			//Take picture when tapping on the touchpad
+			mTextView.setText("Searching...");
 			takePicture();
 			//Note that this call freezes the preview. To take more pictures, you have to call restartPreview()
 			return true;
@@ -73,6 +76,7 @@ CatchoomResponseHandler, CatchoomImageHandler {
 		//There was an error taking the picture!
 		//Restart the camera to allow to take another picture.
 		restartPreview();
+		mTextView.setText("Tap to scan");
 	}
 
 	@Override
@@ -92,21 +96,14 @@ CatchoomResponseHandler, CatchoomImageHandler {
 			
 			// Check if at least one item was found
 			if(items.size() > 0) {
-				//In this example we just consider the best match.
-				//Note that the API can return more than one match, and they are sorted by the confidence score.
-				CatchoomSearchResponseItem bestMatch = items.get(0);
-				
-				//Create a card with the content of the matched image.
-				Card card = new Card(this);
-				card.setText(bestMatch.getItemName());
-				card.setFootnote(bestMatch.getItemId());
-	
-				View cardView = card.getView();
-				setContentView(cardView);
-			}else{
-				//Nothing was found. Restart the preview to allow to take more pictures.
-				restartPreview();
+				//Pass the results to another activity that will show a card with their content
+				Intent showResultIntent = new Intent(getApplicationContext(),ResultActivity.class);
+				showResultIntent.putParcelableArrayListExtra("results",items);
+				startActivity(showResultIntent);
 			}
+			//Restart the preview for future searches
+			restartPreview();
+			mTextView.setText("Tap to scan");
 		}
 
 	}
