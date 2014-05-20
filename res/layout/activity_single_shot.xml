@@ -1,0 +1,26 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+    
+	<FrameLayout 
+	    android:id="@+id/single_shot_preview"
+	    android:layout_width="match_parent"
+	    android:layout_height="match_parent"
+	    android:orientation="horizontal"
+	    tools:context="com.catchoom.examples.glass.SingleShotActivity" >
+	    
+	</FrameLayout>
+
+	<TextView
+	    android:id="@+id/singleshot_textview"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:layout_alignParentBottom="true"
+	    android:layout_centerHorizontal="true"
+	    android:text="Tap to scan"
+	    android:textSize="40sp"
+	    android:layout_marginBottom="10dp"
+	    android:textAppearance="?android:attr/textAppearanceLarge" />
+
+</RelativeLayout>
