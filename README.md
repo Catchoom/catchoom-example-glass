@@ -38,3 +38,5 @@ of course, your Google Glass.
 1.  Download the [Catchoom SDK](http://catchoom.com/product/mobile-sdk/) for Google Glass.
 2.  Unzip the package
 3.  Copy the libs folder into the root of the project.
+4.  Import $(ADT_ROOT)/sdk/extras/android/support/v7/appcompat into your workspace
+5.  Fix project dependency with appcompat to point to the imported project.
