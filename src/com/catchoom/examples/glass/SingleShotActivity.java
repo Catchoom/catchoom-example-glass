@@ -43,6 +43,11 @@ CatchoomResponseHandler, CatchoomImageHandler {
 		//The CatchoomImageHandler is the object that receives the callbacks from the camera.
 		mCatchoomImageHandler = (CatchoomImageHandler) this;
 		
+		// Request the pictures in VGA resolution (640x480) (default is QVGA 320x240).
+		// We will later crop the pictures to 320x240 before sending them, in the requestImageReceived() method.
+		// This method MUST BE CALLED before setCameraParams(), otherwise it has no effect. 
+		CameraConfig.setPictureSize(CameraConfig.PICTURE_SIZE_VGA);
+		
 		// Setup the camera preview
 		setCameraParams(mContext, mPreview);
 		// Tell the parent activity who will receive the takePicture() callback
@@ -80,8 +85,18 @@ CatchoomResponseHandler, CatchoomImageHandler {
 	}
 
 	@Override
-	public void requestImageReceived(CatchoomImage item) {
-		mCatchoom.search(mCollectionToken, item);	
+	public void requestImageReceived(CatchoomImage image) {
+		
+		Bitmap originalImage= image.toBitmap();
+		
+		//Crop to half the size (from VGA to QVGA) centered.
+ 		int newX = (int) (originalImage.getWidth()/4);
+		int newY = (int) (originalImage.getHeight()/4);
+		int newWidth = (int) (originalImage.getWidth()/2); 
+		int newHeight = (int) (originalImage.getHeight()/2);
+		Bitmap croppedImage = Bitmap.createBitmap(originalImage, newX, newY, newWidth, newHeight);
+		mCatchoom.search(mCollectionToken, croppedImage);
+	
 	}
 
 	@SuppressWarnings("unchecked")
