@@ -4,10 +4,10 @@ import java.util.ArrayList;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
-import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
@@ -15,15 +15,16 @@ import com.catchoom.api.Catchoom;
 import com.catchoom.api.CatchoomErrorResponseItem;
 import com.catchoom.api.CatchoomResponseHandler;
 import com.catchoom.api.CatchoomSearchResponseItem;
+import com.catchoom.camera.CameraConfig;
 import com.catchoom.camera.CatchoomImage;
 import com.catchoom.camera.CatchoomImageHandler;
 import com.catchoom.camera.CatchoomSingleShotActivity;
-import com.google.android.glass.app.Card;
 
 public class SingleShotActivity extends CatchoomSingleShotActivity implements
 CatchoomResponseHandler, CatchoomImageHandler {
 	private final String TAG= "CatchoomGlassExample";
 	
+	//TODO: modify this token to point to your collection!
 	private String mCollectionToken = "catchoomcooldemo";
 	
 	private FrameLayout mPreview;
@@ -40,6 +41,7 @@ CatchoomResponseHandler, CatchoomImageHandler {
 		mPreview = (FrameLayout) findViewById(R.id.single_shot_preview);
 		mTextView = (TextView) findViewById(R.id.singleshot_textview);
 		mContext = getApplicationContext();
+		
 		//The CatchoomImageHandler is the object that receives the callbacks from the camera.
 		mCatchoomImageHandler = (CatchoomImageHandler) this;
 		
@@ -50,16 +52,17 @@ CatchoomResponseHandler, CatchoomImageHandler {
 		
 		// Setup the camera preview
 		setCameraParams(mContext, mPreview);
-		// Tell the parent activity who will receive the takePicture() callback
+		// Set the handler that will receive the takePicture() callback
 		setImageHandler(mCatchoomImageHandler);
 		
 		// Create the Catchoom object. The catchoom object is the responsible to do the network calls.
 		mCatchoom = new Catchoom();
-		// Tell the catchoom object who will receive the network responses.
+		// Setup the handler that will receive the network responses.
 		mCatchoom.setResponseHandler((CatchoomResponseHandler) this);
-		//Optional call: Check if the collection token is valid and there's connectivity with the server
-		mCatchoom.connect(mCollectionToken);
 		
+		//OPTIONAL: Check if the collection token is valid and there's connectivity with the server
+		mCatchoom.connect(mCollectionToken);
+			
 	}
 
 	@Override
@@ -67,9 +70,10 @@ CatchoomResponseHandler, CatchoomImageHandler {
 		
 		if (keyCode == KeyEvent.KEYCODE_DPAD_CENTER) {
 			//Take picture when tapping on the touchpad
+			//Note that the takePicture() call freezes the preview: To take more pictures, you have to call restartPreview()
 			mTextView.setText("Searching...");
 			takePicture();
-			//Note that this call freezes the preview. To take more pictures, you have to call restartPreview()
+			
 			return true;
 		}
 		return super.onKeyDown(keyCode, event);
@@ -105,11 +109,11 @@ CatchoomResponseHandler, CatchoomImageHandler {
 		
 		if (requestCode == Catchoom.Request.CONNECT_REQUEST) {
 			// Connect response: Connection accepted
-			Log.i("catchoom-example-glass", "Connection established");
+			Log.i("catchoom-example-glass", "Succesfull connection. Token is valid and the server can be reached.");
 		} else if (requestCode == Catchoom.Request.SEARCH_REQUEST) {
 			ArrayList<CatchoomSearchResponseItem> items = (ArrayList<CatchoomSearchResponseItem>) item;
 			
-			// Check if at least one item was found
+			// Check if at least one result was found
 			if(items.size() > 0) {
 				//Pass the results to another activity that will show a card with their content
 				Intent showResultIntent = new Intent(getApplicationContext(),ResultActivity.class);
