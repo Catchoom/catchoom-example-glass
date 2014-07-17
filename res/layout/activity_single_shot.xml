@@ -3,19 +3,17 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent" >
     
-	<FrameLayout 
-	    android:id="@+id/single_shot_preview"
+	<com.catchoom.CatchoomCameraView 
+	    android:id="@+id/camera_preview"
 	    android:layout_width="match_parent"
 	    android:layout_height="match_parent"
-	    android:orientation="horizontal"
-	    tools:context="com.catchoom.examples.glass.SingleShotActivity" >
-	    
-	</FrameLayout>
+	    android:orientation="horizontal" >
+	</com.catchoom.CatchoomCameraView>
 
 	<ImageView
 	    android:id="@+id/frame"
-	    android:layout_width="wrap_content"
-	    android:layout_height="wrap_content"
+	    android:layout_width="match_parent"
+	    android:layout_height="match_parent"
 	    android:src="@drawable/frame" />
 	
 	<TextView
@@ -28,7 +26,4 @@
 	    android:textSize="40sp"
 	    android:layout_marginBottom="10dp"
 	    android:textAppearance="?android:attr/textAppearanceLarge" />
-
-	
-
 </RelativeLayout>

@@ -8,90 +8,108 @@ import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
-import android.widget.FrameLayout;
+import android.view.MotionEvent;
+import android.view.View;
 import android.widget.TextView;
 
-import com.catchoom.api.Catchoom;
-import com.catchoom.api.CatchoomErrorResponseItem;
-import com.catchoom.api.CatchoomResponseHandler;
-import com.catchoom.api.CatchoomSearchResponseItem;
-import com.catchoom.camera.CameraConfig;
-import com.catchoom.camera.CatchoomImage;
-import com.catchoom.camera.CatchoomImageHandler;
-import com.catchoom.camera.CatchoomSingleShotActivity;
+import com.catchoom.CatchoomActivity;
+import com.catchoom.CatchoomCamera;
+import com.catchoom.CatchoomCameraView;
+import com.catchoom.CatchoomCloudRecognition;
+import com.catchoom.CatchoomCloudRecognitionError;
+import com.catchoom.CatchoomCloudRecognitionItem;
+import com.catchoom.CatchoomImage;
+import com.catchoom.CatchoomImageHandler;
+import com.catchoom.CatchoomResponseHandler;
+import com.catchoom.CatchoomSDK;
+import com.google.android.glass.touchpad.Gesture;
+import com.google.android.glass.touchpad.GestureDetector;
 
-public class SingleShotActivity extends CatchoomSingleShotActivity implements
+
+
+public class SingleShotActivity extends CatchoomActivity implements
 CatchoomResponseHandler, CatchoomImageHandler {
 	private final String TAG= "CatchoomGlassExample";
 	
 	//TODO: modify this token to point to your collection!
 	private String mCollectionToken = "catchoomcooldemo";
 	
-	private FrameLayout mPreview;
-	private Context mContext;
 	private TextView mTextView;
-	private Catchoom mCatchoom;
-	private CatchoomImageHandler mCatchoomImageHandler;
+	
+	private CatchoomCamera mCatchoomCamera;
+	private CatchoomCloudRecognition mCloudRecognition;
+	
+    private GestureDetector mGestureDetector;
 
 	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_single_shot);
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);	
+	}
+	@Override
+	public void onPostCreate() {
+		View mainLayout = (View) getLayoutInflater().inflate(R.layout.activity_single_shot, null);
+		CatchoomCameraView cameraView = (CatchoomCameraView) mainLayout.findViewById(R.id.camera_preview);
+		super.setCameraView(cameraView);
+		setContentView(mainLayout);
 		
-		mPreview = (FrameLayout) findViewById(R.id.single_shot_preview);
+        mGestureDetector = createGestureDetector(this);
+
 		mTextView = (TextView) findViewById(R.id.singleshot_textview);
-		mContext = getApplicationContext();
 		
-		//The CatchoomImageHandler is the object that receives the callbacks from the camera.
-		mCatchoomImageHandler = (CatchoomImageHandler) this;
+		//Initialize the SDK. From this SDK, you will be able to retrieve the necessary modules to use the SDK (camera, tracking, and cloud-recgnition)
+		CatchoomSDK.init(getApplicationContext(),this);
 		
-		// Request the pictures in VGA resolution (640x480) (default is QVGA 320x240).
-		// We will later crop the pictures to 320x240 before sending them, in the requestImageReceived() method.
-		// This method MUST BE CALLED before setCameraParams(), otherwise it has no effect. 
-		CameraConfig.setPictureSize(CameraConfig.PICTURE_SIZE_VGA);
+		//Get the camera to be able to do single-shot (if you just use finder-mode, this is not necessary)
+		mCatchoomCamera = CatchoomSDK.getCamera();
+		mCatchoomCamera.setImageHandler(this); //Tell the camera who will receive the image after takePicture()
 		
-		// Setup the camera preview
-		setCameraParams(mContext, mPreview);
-		// Set the handler that will receive the takePicture() callback
-		setImageHandler(mCatchoomImageHandler);
-		
-		// Create the Catchoom object. The catchoom object is the responsible to do the network calls.
-		mCatchoom = new Catchoom();
-		// Setup the handler that will receive the network responses.
-		mCatchoom.setResponseHandler((CatchoomResponseHandler) this);
-		
-		//OPTIONAL: Check if the collection token is valid and there's connectivity with the server
-		mCatchoom.connect(mCollectionToken);
-			
+		//Setup the finder-mode: Note! PRESERVE THE ORDER OF THIS CALLS
+		mCloudRecognition= CatchoomSDK.getCloudRecognition();//Obtain the cloud recognition module
+		mCloudRecognition.setResponseHandler(this); //Tell the cloud recognition who will receive the responses from the cloud
+		mCloudRecognition.setCollectionToken(mCollectionToken); //Tell the cloud-recognition which token to use from the finder mode
+
+		mCloudRecognition.connect(mCollectionToken);	
 	}
 
+	private GestureDetector createGestureDetector(Context context) {
+		GestureDetector gestureDetector = new GestureDetector(context);
+		// Create a base listener for generic gestures
+		gestureDetector.setBaseListener(new GestureDetector.BaseListener() {
+			@Override
+			public boolean onGesture(Gesture gesture) {
+				// 1 tap, Single shot mode
+				if (gesture == Gesture.TAP) {
+					Log.i(TAG,"take picture");
+					mTextView.setText("Searching...");
+					mCatchoomCamera.takePicture();
+					return true;
+				// 1 long tap, Finder mode  
+				} else if (gesture == Gesture.LONG_PRESS) {
+					Log.i(TAG,"start finding");
+					mTextView.setText("Scanning");
+					mCloudRecognition.startFinding();
+					return true;
+				}
+				return false;
+			}
+		});
+		return gestureDetector;
+	}
+	
+	/*
+	 * Send generic motion events to the gesture detector
+	 */
 	@Override
-	public boolean onKeyDown(int keyCode, KeyEvent event) {
-		
-		if (keyCode == KeyEvent.KEYCODE_DPAD_CENTER) {
-			//Take picture when tapping on the touchpad
-			//Note that the takePicture() call freezes the preview: To take more pictures, you have to call restartPreview()
-			mTextView.setText("Searching...");
-			takePicture();
-			
-			return true;
+	public boolean onGenericMotionEvent(MotionEvent event) {
+		if (mGestureDetector != null) {
+			return mGestureDetector.onMotionEvent(event);
 		}
-		return super.onKeyDown(keyCode, event);
-	}
-
-
-	@Override
-	public void requestImageError(String errorMessage) {
-		//There was an error taking the picture!
-		//Restart the camera to allow to take another picture.
-		restartPreview();
-		mTextView.setText("Tap to scan");
+		return false;
 	}
 
 	@Override
 	public void requestImageReceived(CatchoomImage image) {
-		
-		Bitmap originalImage= image.toBitmap();
+		Bitmap originalImage = image.toBitmap();
 		
 		//Crop to half the size (from VGA to QVGA) centered.
  		int newX = (int) (originalImage.getWidth()/4);
@@ -99,36 +117,34 @@ CatchoomResponseHandler, CatchoomImageHandler {
 		int newWidth = (int) (originalImage.getWidth()/2); 
 		int newHeight = (int) (originalImage.getHeight()/2);
 		Bitmap croppedImage = Bitmap.createBitmap(originalImage, newX, newY, newWidth, newHeight);
-		mCatchoom.search(mCollectionToken, croppedImage);
-	
+		mCloudRecognition.searchWithImage(mCollectionToken, image);	
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
-	public void requestCompletedResponse(int requestCode, Object item) {
-		
-		if (requestCode == Catchoom.Request.CONNECT_REQUEST) {
-			// Connect response: Connection accepted
-			Log.i("catchoom-example-glass", "Succesfull connection. Token is valid and the server can be reached.");
-		} else if (requestCode == Catchoom.Request.SEARCH_REQUEST) {
-			ArrayList<CatchoomSearchResponseItem> items = (ArrayList<CatchoomSearchResponseItem>) item;
+	public void searchCompleted(ArrayList<CatchoomCloudRecognitionItem> items) {
 			
-			// Check if at least one result was found
-			if(items.size() > 0) {
-				//Pass the results to another activity that will show a card with their content
-				Intent showResultIntent = new Intent(getApplicationContext(),ResultActivity.class);
-				showResultIntent.putParcelableArrayListExtra("results",items);
-				startActivity(showResultIntent);
-			}
+		// Check if at least one result was found
+		if(items.size() > 0) {
+			mCloudRecognition.stopFinding();
+			//Pass the results to another activity that will show a card with their content
+			Intent showResultIntent = new Intent(getApplicationContext(),ResultActivity.class);
+			showResultIntent.putParcelableArrayListExtra("results",items);
+			startActivity(showResultIntent);
+		
 			//Restart the preview for future searches
-			restartPreview();
-			mTextView.setText("Tap to scan");
+			mTextView.setText("Tap to scan");	
 		}
-
 	}
 
 	@Override
-	public void requestFailedResponse(int requestCode, CatchoomErrorResponseItem responseError) {
+	public void connectCompleted() {
+		// Connect response: Connection accepted
+		Log.i(TAG, "Succesfull connection. Token is valid and the server can be reached.");		
+	}
+
+	@Override
+	public void requestFailedResponse(int requestCode,
+			CatchoomCloudRecognitionError responseError) {
 		//Something went wrong. Either there's no connectivity, the collection token is invalid, the image has not enough details, etc.
 		
 		if (null == responseError) {
@@ -136,18 +152,27 @@ CatchoomResponseHandler, CatchoomImageHandler {
 		} else {
 			Log.d(TAG, responseError.getErrorCode() + ": " + responseError.getErrorMessage());
 			switch (responseError.getErrorCode()) {
-				case CatchoomErrorResponseItem.ErrorCodes.TOKEN_INVALID:
+				case CatchoomCloudRecognitionError.ErrorCodes.TOKEN_INVALID:
 					Log.e(TAG,"The collection token is invalid");
 					break;
-				case CatchoomErrorResponseItem.ErrorCodes.TOKEN_WRONG:
+				case CatchoomCloudRecognitionError.ErrorCodes.TOKEN_WRONG:
 					Log.e(TAG,"Wrong collection token. Note that a collection token must have 16 characters");
 					break;
-				case CatchoomErrorResponseItem.ErrorCodes.IMAGE_NO_DETAILS:
+				case CatchoomCloudRecognitionError.ErrorCodes.IMAGE_NO_DETAILS:
 					Log.e(TAG,"The requested image has not enough details");
 					break;
 				default:
 					Log.e(TAG,"Unknown error occurred");
 			}
 		}
+		mCloudRecognition.stopFinding();
+	}
+	
+	@Override
+	public void requestImageError(String error) {
+		//There was an error taking the picture!
+		//Restart the camera to allow to take another picture.
+		mCatchoomCamera.restartCameraPreview();
+		mTextView.setText("Tap to scan");		
 	}
 }
