@@ -35,6 +35,7 @@ CatchoomResponseHandler, CatchoomImageHandler {
 	private String mCollectionToken = "catchoomcooldemo";
 	
 	private TextView mTextView;
+	private boolean mHaveContent = false;
 	
 	private CatchoomCamera mCatchoomCamera;
 	private CatchoomCloudRecognition mCloudRecognition;
@@ -109,14 +110,6 @@ CatchoomResponseHandler, CatchoomImageHandler {
 
 	@Override
 	public void requestImageReceived(CatchoomImage image) {
-		Bitmap originalImage = image.toBitmap();
-		
-		//Crop to half the size (from VGA to QVGA) centered.
- 		int newX = (int) (originalImage.getWidth()/4);
-		int newY = (int) (originalImage.getHeight()/4);
-		int newWidth = (int) (originalImage.getWidth()/2); 
-		int newHeight = (int) (originalImage.getHeight()/2);
-		Bitmap croppedImage = Bitmap.createBitmap(originalImage, newX, newY, newWidth, newHeight);
 		mCloudRecognition.searchWithImage(mCollectionToken, image);	
 	}
 
@@ -125,13 +118,17 @@ CatchoomResponseHandler, CatchoomImageHandler {
 			
 		// Check if at least one result was found
 		if(items.size() > 0) {
+			mHaveContent = true;
 			mCloudRecognition.stopFinding();
 			//Pass the results to another activity that will show a card with their content
 			Intent showResultIntent = new Intent(getApplicationContext(),ResultActivity.class);
 			showResultIntent.putParcelableArrayListExtra("results",items);
 			startActivity(showResultIntent);
+		}
 		
+		if (mHaveContent) {
 			//Restart the preview for future searches
+			mCatchoomCamera.restartCameraPreview();
 			mTextView.setText("Tap to scan");	
 		}
 	}
