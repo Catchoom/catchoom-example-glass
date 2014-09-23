@@ -13,7 +13,7 @@ contents to display upon recognition in your Catchoom-powered Glass app.
 This project contains a simple example showing how to perform image recognition on
 your Google Glass using the Catchoom SDK for Google Glass.
 
-General use of the SDK can be found in the [Documentation section of Catchoom website](http://catchoom.com/documentation/sdk/glass/). Complete SDK documentation of the
+General use of the SDK can be found in the [Documentation section of Catchoom website](http://catchoom.com/documentation/sdk/image-recognition/android-image-recognition-sdk/). Complete SDK documentation of the
 classes can be found within the SDK distribution.
 
 ### How to use the examples
@@ -36,6 +36,6 @@ To build the project or use the library, you will need the latest version of the
 of course, your Google Glass.
 
 #### Step-by-step guide
-1.  Download the [Catchoom SDK](http://catchoom.com/product/mobile-sdk/) for Google Glass.
+1.  Download the [Catchoom SDK](http://catchoom.com/documentation/sdk/image-recognition/android-image-recognition-sdk/) for Google Glass.
 2.  Unzip the package.
 3.  Copy the libs folder into the root of the project.
