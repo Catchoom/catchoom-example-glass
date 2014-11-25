@@ -1,4 +1,4 @@
-package com.catchoom.examples.glass;
+package com.craftar.examples.glass;
 
 import java.util.ArrayList;
 
@@ -6,8 +6,9 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.view.View;
 
-import com.catchoom.CatchoomCloudRecognitionItem;
+import com.craftar.CraftARItem;
 import com.google.android.glass.app.Card;
+
 
 public class ResultActivity extends Activity{
 	
@@ -16,11 +17,11 @@ public class ResultActivity extends Activity{
 		super.onCreate(savedInstanceState);
 		
 		Bundle extras= getIntent().getExtras();
-		ArrayList<CatchoomCloudRecognitionItem> results= extras.getParcelableArrayList("results");
+		ArrayList<CraftARItem> results= extras.getParcelableArrayList("results");
 		
 		//In this example we just consider the best match.
 		//Note that the API can return more than one match, and they are sorted by the confidence score.
-		CatchoomCloudRecognitionItem bestMatch= results.get(0);
+		CraftARItem bestMatch= results.get(0);
 		
 		//Create a card with the content of the matched image.
 		Card card = new Card(this);

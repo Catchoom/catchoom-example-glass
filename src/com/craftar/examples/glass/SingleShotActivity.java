@@ -1,35 +1,33 @@
-package com.catchoom.examples.glass;
+package com.craftar.examples.glass;
 
 import java.util.ArrayList;
 
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.TextView;
 
-import com.catchoom.CatchoomActivity;
-import com.catchoom.CatchoomCamera;
-import com.catchoom.CatchoomCameraView;
-import com.catchoom.CatchoomCloudRecognition;
-import com.catchoom.CatchoomCloudRecognitionError;
-import com.catchoom.CatchoomCloudRecognitionItem;
-import com.catchoom.CatchoomImage;
-import com.catchoom.CatchoomImageHandler;
-import com.catchoom.CatchoomResponseHandler;
-import com.catchoom.CatchoomSDK;
+import com.craftar.CraftARActivity;
+import com.craftar.CraftARCamera;
+import com.craftar.CraftARCameraView;
+import com.craftar.CraftARCloudRecognition;
+import com.craftar.CraftARCloudRecognitionError;
+import com.craftar.CraftARImage;
+import com.craftar.CraftARImageHandler;
+import com.craftar.CraftARItem;
+import com.craftar.CraftARResponseHandler;
+import com.craftar.CraftARSDK;
 import com.google.android.glass.touchpad.Gesture;
 import com.google.android.glass.touchpad.GestureDetector;
 
 
 
-public class SingleShotActivity extends CatchoomActivity implements
-CatchoomResponseHandler, CatchoomImageHandler {
-	private final String TAG= "CatchoomGlassExample";
+public class SingleShotActivity extends CraftARActivity implements
+CraftARResponseHandler, CraftARImageHandler {
+	private final String TAG= "CraftARGlassExample";
 	
 	//TODO: modify this token to point to your collection!
 	private String mCollectionToken = "catchoomcooldemo";
@@ -37,8 +35,8 @@ CatchoomResponseHandler, CatchoomImageHandler {
 	private TextView mTextView;
 	private boolean mHaveContent = false;
 	
-	private CatchoomCamera mCatchoomCamera;
-	private CatchoomCloudRecognition mCloudRecognition;
+	private CraftARCamera mCraftARCamera;
+	private CraftARCloudRecognition mCloudRecognition;
 	
     private GestureDetector mGestureDetector;
 
@@ -49,7 +47,7 @@ CatchoomResponseHandler, CatchoomImageHandler {
 	@Override
 	public void onPostCreate() {
 		View mainLayout = (View) getLayoutInflater().inflate(R.layout.activity_single_shot, null);
-		CatchoomCameraView cameraView = (CatchoomCameraView) mainLayout.findViewById(R.id.camera_preview);
+		CraftARCameraView cameraView = (CraftARCameraView) mainLayout.findViewById(R.id.camera_preview);
 		super.setCameraView(cameraView);
 		setContentView(mainLayout);
 		
@@ -58,14 +56,14 @@ CatchoomResponseHandler, CatchoomImageHandler {
 		mTextView = (TextView) findViewById(R.id.singleshot_textview);
 		
 		//Initialize the SDK. From this SDK, you will be able to retrieve the necessary modules to use the SDK (camera, tracking, and cloud-recgnition)
-		CatchoomSDK.init(getApplicationContext(),this);
+		CraftARSDK.init(getApplicationContext(),this);
 		
 		//Get the camera to be able to do single-shot (if you just use finder-mode, this is not necessary)
-		mCatchoomCamera = CatchoomSDK.getCamera();
-		mCatchoomCamera.setImageHandler(this); //Tell the camera who will receive the image after takePicture()
+		mCraftARCamera = CraftARSDK.getCamera();
+		mCraftARCamera.setImageHandler(this); //Tell the camera who will receive the image after takePicture()
 		
 		//Setup the finder-mode: Note! PRESERVE THE ORDER OF THIS CALLS
-		mCloudRecognition= CatchoomSDK.getCloudRecognition();//Obtain the cloud recognition module
+		mCloudRecognition= CraftARSDK.getCloudRecognition();//Obtain the cloud recognition module
 		mCloudRecognition.setResponseHandler(this); //Tell the cloud recognition who will receive the responses from the cloud
 		mCloudRecognition.setCollectionToken(mCollectionToken); //Tell the cloud-recognition which token to use from the finder mode
 
@@ -82,7 +80,7 @@ CatchoomResponseHandler, CatchoomImageHandler {
 				if (gesture == Gesture.TAP) {
 					Log.i(TAG,"take picture");
 					mTextView.setText("Searching...");
-					mCatchoomCamera.takePicture();
+					mCraftARCamera.takePicture();
 					return true;
 				// 1 long tap, Finder mode  
 				} else if (gesture == Gesture.LONG_PRESS) {
@@ -109,12 +107,12 @@ CatchoomResponseHandler, CatchoomImageHandler {
 	}
 
 	@Override
-	public void requestImageReceived(CatchoomImage image) {
+	public void requestImageReceived(CraftARImage image) {
 		mCloudRecognition.searchWithImage(mCollectionToken, image);	
 	}
 
 	@Override
-	public void searchCompleted(ArrayList<CatchoomCloudRecognitionItem> items) {
+	public void searchCompleted(ArrayList<CraftARItem> items) {
 			
 		// Check if at least one result was found
 		if(items.size() > 0) {
@@ -128,7 +126,7 @@ CatchoomResponseHandler, CatchoomImageHandler {
 		
 		if (mHaveContent) {
 			//Restart the preview for future searches
-			mCatchoomCamera.restartCameraPreview();
+			mCraftARCamera.restartCameraPreview();
 			mTextView.setText("Tap to scan");	
 		}
 	}
@@ -141,7 +139,7 @@ CatchoomResponseHandler, CatchoomImageHandler {
 
 	@Override
 	public void requestFailedResponse(int requestCode,
-			CatchoomCloudRecognitionError responseError) {
+			CraftARCloudRecognitionError responseError) {
 		//Something went wrong. Either there's no connectivity, the collection token is invalid, the image has not enough details, etc.
 		
 		if (null == responseError) {
@@ -149,13 +147,13 @@ CatchoomResponseHandler, CatchoomImageHandler {
 		} else {
 			Log.d(TAG, responseError.getErrorCode() + ": " + responseError.getErrorMessage());
 			switch (responseError.getErrorCode()) {
-				case CatchoomCloudRecognitionError.ErrorCodes.TOKEN_INVALID:
+				case CraftARCloudRecognitionError.ErrorCodes.TOKEN_INVALID:
 					Log.e(TAG,"The collection token is invalid");
 					break;
-				case CatchoomCloudRecognitionError.ErrorCodes.TOKEN_WRONG:
+				case CraftARCloudRecognitionError.ErrorCodes.TOKEN_WRONG:
 					Log.e(TAG,"Wrong collection token. Note that a collection token must have 16 characters");
 					break;
-				case CatchoomCloudRecognitionError.ErrorCodes.IMAGE_NO_DETAILS:
+				case CraftARCloudRecognitionError.ErrorCodes.IMAGE_NO_DETAILS:
 					Log.e(TAG,"The requested image has not enough details");
 					break;
 				default:
@@ -169,7 +167,7 @@ CatchoomResponseHandler, CatchoomImageHandler {
 	public void requestImageError(String error) {
 		//There was an error taking the picture!
 		//Restart the camera to allow to take another picture.
-		mCatchoomCamera.restartCameraPreview();
+		mCraftARCamera.restartCameraPreview();
 		mTextView.setText("Tap to scan");		
 	}
 }

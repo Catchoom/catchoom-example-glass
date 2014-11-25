@@ -25,11 +25,11 @@ example that shows how to use the SDK.
 
 To run the example follow these steps:
  1.  Import the project into your eclipse workspace.
- 2.  Integrate the CatchoomSDK into the project (see [below](#step-by-step-guide)).
+ 2.  Integrate the CraftARSDK into the project (see [below](#step-by-step-guide)).
  3.  Run the app on an Google Glass device.
  4.  Point to any of the [demo examples](http://catchoom.com/product/craftar/craftar-how-it-works/#craftardemos).
 
-### Add CatchoomSDK for Google Glass to the Example project
+### Add CraftARSDK for Google Glass to the Example project
 
 #### Requirements
 
