@@ -2,29 +2,27 @@ package com.craftar.examples.glass;
 
 import java.util.ArrayList;
 
-import android.content.Context;
 import android.content.Intent;
+import android.media.AudioManager;
+import android.media.ToneGenerator;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.MotionEvent;
+import android.view.KeyEvent;
 import android.view.View;
 import android.widget.TextView;
 
 import com.craftar.CraftARActivity;
-import com.craftar.CraftARCamera;
 import com.craftar.CraftARCameraView;
 import com.craftar.CraftARCloudRecognition;
 import com.craftar.CraftARCloudRecognitionError;
 import com.craftar.CraftARItem;
 import com.craftar.CraftARResponseHandler;
 import com.craftar.CraftARSDK;
-import com.google.android.glass.touchpad.Gesture;
-import com.google.android.glass.touchpad.GestureDetector;
 
 
 
 public class FinderActivity extends CraftARActivity implements
-CraftARResponseHandler {
+CraftARResponseHandler{
 	private final String TAG= "CraftARGlassExample";
 	
 	//TODO: modify this token to point to your collection!
@@ -32,11 +30,9 @@ CraftARResponseHandler {
 	
 	private TextView mTextView;
 	
-	private CraftARCamera mCraftARCamera;
 	private CraftARCloudRecognition mCloudRecognition;
 	
-    private GestureDetector mGestureDetector;
-    
+	boolean mIsFinderActive=false;
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);	
@@ -44,12 +40,11 @@ CraftARResponseHandler {
 	@Override
 	public void onPostCreate() {
 		View mainLayout = (View) getLayoutInflater().inflate(R.layout.camera_activity, null);
+				
 		CraftARCameraView cameraView = (CraftARCameraView) mainLayout.findViewById(R.id.camera_preview);
 		super.setCameraView(cameraView);
 		setContentView(mainLayout);
 		
-        mGestureDetector = createGestureDetector(this);
-
 		mTextView = (TextView) findViewById(R.id.tap_to_scan_textview);
 		
 		//Initialize the SDK. From this SDK, you will be able to retrieve the necessary modules to use the SDK (camera, tracking, and cloud-recognition)
@@ -60,39 +55,31 @@ CraftARResponseHandler {
 		mCloudRecognition.setResponseHandler(this); //Tell the cloud recognition who will receive the responses from the cloud
 		mCloudRecognition.setCollectionToken(mCollectionToken); //Tell the cloud-recognition which token to use from the finder mode
 
-		mCloudRecognition.connect(mCollectionToken);	
+		mCloudRecognition.connect(mCollectionToken); //This call is optional and it only validates the connectivity with the servers.
 	}
 
-	private GestureDetector createGestureDetector(Context context) {
-		GestureDetector gestureDetector = new GestureDetector(context);
-		// Create a base listener for generic gestures
-		gestureDetector.setBaseListener(new GestureDetector.BaseListener() {
-			@Override
-			public boolean onGesture(Gesture gesture) {
-				// 1 tap, Single shot mode
-				if (gesture == Gesture.TAP) {
-					Log.i(TAG,"take picture");
-					mTextView.setText("Scanning...");
-					mCloudRecognition.startFinding();
-					return true;
-				}
-				return false;
-			}
-		});
-		return gestureDetector;
-	}
-	
-	/*
-	 * Send generic motion events to the gesture detector
-	 */
+
 	@Override
-	public boolean onGenericMotionEvent(MotionEvent event) {
-		if (mGestureDetector != null) {
-			return mGestureDetector.onMotionEvent(event);
+	public boolean onKeyDown(int keyCode,KeyEvent event){
+		super.onKeyDown(keyCode, event);
+		if(keyCode== KeyEvent.KEYCODE_DPAD_CENTER){
+			final ToneGenerator tg = new ToneGenerator(AudioManager.STREAM_NOTIFICATION, 100);
+		    tg.startTone(ToneGenerator.TONE_PROP_BEEP);
+		    
+		    mIsFinderActive= !mIsFinderActive;
+		    
+		    if(mIsFinderActive){
+				mTextView.setText("Scanning...");
+				mCloudRecognition.startFinding();
+		    }else{
+				mTextView.setText("Tap to scan");
+				mCloudRecognition.stopFinding();
+		    }
+			return true;
 		}
 		return false;
 	}
-
+	
 	@Override
 	public void searchCompleted(ArrayList<CraftARItem> items) {
 		// Check if at least one result was found
@@ -138,5 +125,4 @@ CraftARResponseHandler {
 			}
 		}
 	}
-
 }
