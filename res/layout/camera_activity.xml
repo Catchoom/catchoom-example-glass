@@ -11,7 +11,7 @@
 	</com.craftar.CraftARCameraView>
 	
 	<TextView
-	    android:id="@+id/singleshot_textview"
+	    android:id="@+id/tap_to_scan_textview"
 	    android:layout_width="wrap_content"
 	    android:layout_height="wrap_content"
 	    android:layout_alignParentBottom="true"
